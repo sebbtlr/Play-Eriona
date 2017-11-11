@@ -8,12 +8,10 @@ namespace EvilEngine.Lab
 {
     public enum PlayerStatus
     {
-        None = 0,
-        Idle = 1,
-        Walk = 2,
-        Jump = 4,
-        Dash = 8,
-        OnGround = 16
+        None,
+        Ground,
+        Air,
+        Dash
     }
 
     public class States
@@ -49,7 +47,7 @@ namespace EvilEngine.Lab
 
             CurrentState = new States
             {
-                Status = PlayerStatus.Jump,
+                Status = PlayerStatus.Air,
                 Position = Vector2.Zero,
                 Acceleration = Vector2.Zero
             };
@@ -80,13 +78,13 @@ namespace EvilEngine.Lab
         {
             LastState.Copy(CurrentState);
 
-            if (CurrentState.Status == PlayerStatus.Jump)
+            if (CurrentState.Status == PlayerStatus.Air)
                 CurrentState.Acceleration.Y += 40.0f * (float) Game.DeltaTime;
 
 
             if (CurrentState.Position.Y >= 400)
             {
-                CurrentState.Status = PlayerStatus.OnGround;
+                CurrentState.Status = PlayerStatus.Ground;
                 CurrentState.Acceleration = Vector2.Zero;
             }
 
