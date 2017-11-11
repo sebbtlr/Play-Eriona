@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.0.0
+MinimumVisualStudioVersion = 10.0.0.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eriona", "Eriona\Eriona.csproj", "{56DA9D76-0511-464B-806C-C3F9078A63DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvilEngine", "EvilEngine\EvilEngine.csproj", "{175ED14D-ACBE-45AA-A52C-4A0680C52118}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{56DA9D76-0511-464B-806C-C3F9078A63DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56DA9D76-0511-464B-806C-C3F9078A63DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56DA9D76-0511-464B-806C-C3F9078A63DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56DA9D76-0511-464B-806C-C3F9078A63DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{175ED14D-ACBE-45AA-A52C-4A0680C52118}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{175ED14D-ACBE-45AA-A52C-4A0680C52118}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{175ED14D-ACBE-45AA-A52C-4A0680C52118}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{175ED14D-ACBE-45AA-A52C-4A0680C52118}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
