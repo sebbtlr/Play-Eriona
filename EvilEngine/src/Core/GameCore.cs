@@ -16,6 +16,8 @@ namespace EvilEngine.Core
 
         public double DeltaTime;
 
+        public SpriteFont DefaultFont;
+
         protected GameCore()
         {
             _graphics = new GraphicsDeviceManager(this)
@@ -32,12 +34,15 @@ namespace EvilEngine.Core
         protected override void Initialize()
         {
             base.Initialize();
+
+            IsMouseVisible = true;
         }
 
         protected override void LoadContent()
         {
             base.LoadContent();
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            DefaultFont = Content.Load<SpriteFont>("debug");
             _player.LoadContent();
         }
 
