@@ -57,6 +57,14 @@ namespace EvilEngine.Physics
             Width = rectangle.Width;
             Height = rectangle.Height;
         }
+        
+        public Transform(Transform transform)
+        {
+            X = transform.X;
+            Y = transform.Y;
+            Width = transform.Width;
+            Height = transform.Height;
+        }
 
         public float Top
         {

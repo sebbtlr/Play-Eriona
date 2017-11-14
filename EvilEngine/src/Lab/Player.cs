@@ -17,15 +17,17 @@ namespace EvilEngine.Lab
 
     public class States
     {
-        public Vector2 Acceleration;
+        public ForceList Velocity;
+        public Vector2 Speed;
         public Transform Hitbox;
         public PlayerStatus Status;
 
         public void Copy(States other)
         {
             Status = other.Status;
-            Hitbox = other.Hitbox;
-            Acceleration = other.Acceleration;
+            Hitbox = new Transform(other.Hitbox);
+            Speed = other.Speed;
+            other.Velocity.CopyIn(out Velocity);
         }
     }
 
@@ -41,6 +43,11 @@ namespace EvilEngine.Lab
         public Vector2 Scale;
         public Texture2D Texture;
 
+        public const float WALKSPEED = 250;
+        public const float JUMPSPEED = 400;
+        public readonly Vector2 GRAVITY = Vector2.UnitY * 550;
+        
+
         public Player(GameCore game)
         {
             Game = game;
@@ -49,20 +56,23 @@ namespace EvilEngine.Lab
             {
                 Status = PlayerStatus.Air,
                 Hitbox = new Transform(),
-                Acceleration = Vector2.Zero
+                Speed = Vector2.Zero,
+                Velocity = new ForceList()
             };
 
             LastState = new States();
-            LastState.Copy(CurrentState);
+            CurrentState.Velocity.CopyIn(out LastState.Velocity);
 
             Scale = Vector2.One;
+
+            CurrentState.Velocity.AddForce("GRAVITY", GRAVITY);
         }
 
         public void LoadContent()
         {
             Texture = Game.Content.Load<Texture2D>("spritesheet");
             Console.WriteLine(Texture.Bounds.ToString());
-            CurrentState.Hitbox = new Transform(0,0,29,65);
+            CurrentState.Hitbox = new Transform(0, 0, 29, 65);
             TextureOffset = Vector2.Zero;
         }
 
@@ -71,62 +81,77 @@ namespace EvilEngine.Lab
             LastState.Copy(CurrentState);
             UpdateInputs();
             UpdatePhysics();
-            
-            
         }
 
         private void UpdateInputs()
         {
-            if (CurrentState.Status == PlayerStatus.Air || CurrentState.Status == PlayerStatus.Ground)
+            if (Game.Input.Key.Is.Down(Keys.Left))
             {
-                if (Game.Input.Key.Is.Down(Keys.Left))
-                {
-                    CurrentState.Acceleration.X = -180;
-                }
-                else if (Game.Input.Key.Is.Down(Keys.Right))
-                {
-                    CurrentState.Acceleration.X = 180;
-                }
-                else
-                {
-                    CurrentState.Acceleration.X = 0;
-                }
+                CurrentState.Speed.X = -WALKSPEED;
+            }
+            else if (Game.Input.Key.Is.Down(Keys.Right))
+            {
+                CurrentState.Speed.X = WALKSPEED;
+            }
+            else
+            {
+                CurrentState.Speed.X = 0;
             }
 
             if (CurrentState.Status == PlayerStatus.Ground && Game.Input.Key.Is.Press(Keys.Up))
             {
-                    CurrentState.Acceleration.Y = -300;
-                    CurrentState.Status = PlayerStatus.Air;
-            }
-            else if (CurrentState.Status == PlayerStatus.Air && CurrentState.Acceleration.Y < 0 && Game.Input.Key.Is.Down(Keys.Up))
-            {
-                CurrentState.Acceleration.Y = Math.Max(CurrentState.Acceleration.Y, -400);
+                CurrentState.Speed.Y = -JUMPSPEED;
+                CurrentState.Status = PlayerStatus.Air;
             }
         }
 
         private void UpdatePhysics()
         {
-            if (CurrentState.Status == PlayerStatus.Air)
-                CurrentState.Acceleration.Y += 500.0f * (float) Game.DeltaTime;
-            
-            
-            CurrentState.Hitbox.Position += CurrentState.Acceleration * (float) Game.DeltaTime;
+            CurrentState.Speed += CurrentState.Velocity.Value * (float) Game.DeltaTime;
 
-            if (CurrentState.Hitbox.Y >= 400 && LastState.Status != PlayerStatus.Ground)
+
+            CurrentState.Hitbox.Position += CurrentState.Speed * (float) Game.DeltaTime;
+
+            if (CurrentState.Hitbox.Y > 400)
             {
                 CurrentState.Status = PlayerStatus.Ground;
-                CurrentState.Acceleration.Y = 0;
+                CurrentState.Hitbox.Y = 400;
+                CurrentState.Speed.Y = 0;
             }
-            
         }
+
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Texture, CurrentState.Hitbox.Position + TextureOffset, new Rectangle(212, 0, 29, 65), Color.White);
+            spriteBatch.Draw(Texture, CurrentState.Hitbox.Position + TextureOffset, new Rectangle(212, 0, 29, 65),
+                Color.White);
+#if DEBUG
+            DebugDraw(spriteBatch);
+#endif
+        }
 
-            string debug = $"Status:  {CurrentState.Status} \n Acceleration: {CurrentState.Acceleration} \n Position: {CurrentState.Hitbox.Position} ";
-            
+#if DEBUG
+
+        private float _wait = 5;
+        private States _debugStates = new States();
+
+        public void DebugDraw(SpriteBatch spriteBatch)
+        {
+            if (_wait < 5)
+            {
+                _wait++;
+            }
+            else
+            {
+                _debugStates.Copy(LastState);
+                _wait = 0;
+            }
+
+            string debug =
+                $"Status: {_debugStates.Status} \n Speed: {_debugStates.Speed} \n Velocity: {_debugStates.Velocity.Value} \n Position: {_debugStates.Hitbox.Position} ";
+
             spriteBatch.DrawString(Game.DefaultFont, debug, Vector2.Zero, Color.White);
         }
+#endif
     }
 }
