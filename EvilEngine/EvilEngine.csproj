@@ -55,6 +55,7 @@
     <Compile Include="src\Core\GameCore.cs" />
     <Compile Include="src\Lab\Player.cs" />
       <Compile Include="src\Physics\ForceList.cs"/>
+      <Compile Include="src\Physics\ForceType.cs"/>
     <Compile Include="src\Physics\Transform.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -14,7 +14,7 @@ namespace EvilEngine.Core
 
         private SpriteBatch _spriteBatch;
 
-        public double DeltaTime;
+        public float DeltaTime;
 
         public SpriteFont DefaultFont;
 
@@ -49,7 +49,7 @@ namespace EvilEngine.Core
         protected override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            DeltaTime = gameTime.ElapsedGameTime.TotalSeconds;
+            DeltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             Input.Update();
             _player.Update();
         }
