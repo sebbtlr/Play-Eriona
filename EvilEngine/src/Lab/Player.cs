@@ -32,6 +32,7 @@ namespace EvilEngine.Lab
     }
 
     // TODO: Jump Height
+    // Apply an intial jump force and then iterate another force until the end of the timer
     public class Player
     {
         public readonly States CurrentState;
@@ -44,7 +45,11 @@ namespace EvilEngine.Lab
         public Texture2D Texture;
 
         public  float WalkSpeed = 250;
-        public  float JumpSpeed = 400;
+        public  float JumpInitial = -350;
+        public  float JumpForce = -100;
+        public float JumpTimeMax = 0.5f;
+        private float _jumpTimeCounter = 0;
+        private bool _stopJump = false;
         public readonly Vector2 Gravity = Vector2.UnitY * 550 ;
 
         public  float DashTime = 0.2f;
@@ -107,14 +112,19 @@ namespace EvilEngine.Lab
                
                 CurrentState.Status = PlayerStatus.Dash;
                 
-                if (CurrentState.Speed.X > 0)
-                CurrentState.Speed = DashForce * Vector2.UnitX;
-                else if (CurrentState.Speed.X < 0)
+                
+                
+                if (Game.Input.Key.Is.Down(Keys.Right))
+                    CurrentState.Speed = DashForce * Vector2.UnitX;
+                else if (Game.Input.Key.Is.Down(Keys.Left))
                     CurrentState.Speed = DashForce * -Vector2.UnitX;
                 else
-                {
                     CurrentState.Speed = DashForce * -Vector2.UnitY;
-                }
+                
+                if (Game.Input.Key.Is.Down(Keys.Up))
+                    CurrentState.Speed.Y = -DashForce;
+                else if (Game.Input.Key.Is.Down(Keys.Down))
+                    CurrentState.Speed.Y = DashForce;
                 
                 CurrentState.Velocity.RemoveForce(ForceType.Gravity);
             }
@@ -135,9 +145,18 @@ namespace EvilEngine.Lab
 
                 if (Game.Input.Key.Is.Press(Keys.Up) && CurrentState.Status == PlayerStatus.Ground)
                 {
-                    CurrentState.Speed.Y = -JumpSpeed;
+                    CurrentState.Speed.Y = JumpForce;
                     CurrentState.Status = PlayerStatus.Air;
+                    _jumpTimeCounter = 0;
                 }
+                else if (Game.Input.Key.Was.Down(Keys.Up) && Game.Input.Key.Is.Down(Keys.Up) && _jumpTimeCounter < JumpTimeMax)
+                {
+                    CurrentState.Speed.Y = MathHelper.Lerp(JumpInitial, JumpForce, 0.1f); 
+                    _jumpTimeCounter += Game.DeltaTime;
+                }
+
+                if (Game.Input.Key.Is.Release(Keys.Up))
+                    _jumpTimeCounter = JumpTimeMax;
             }
             
             
@@ -182,7 +201,7 @@ namespace EvilEngine.Lab
             }
 
             string debug =
-                $"Status: {_debugStates.Status} \n Speed: {_debugStates.Speed} \n Velocity: {_debugStates.Velocity.Value} \n Position: {_debugStates.Hitbox.Position} \n DashTime: {_dashCounter}";
+                $"Status: {_debugStates.Status} \n Speed: {_debugStates.Speed} \n Velocity: {_debugStates.Velocity.Value} \n Position: {_debugStates.Hitbox.Position} \n DashTime: {_dashCounter} \n JumpCounter: {_jumpTimeCounter}";
 
             spriteBatch.DrawString(Game.DefaultFont, debug, Vector2.Zero, Color.White);
         }
