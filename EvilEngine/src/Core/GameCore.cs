@@ -14,9 +14,9 @@ namespace EvilEngine.Core
 
         private SpriteBatch _spriteBatch;
 
-        public float DeltaTime;
-
         public SpriteFont DefaultFont;
+
+        public float DeltaTime;
 
         protected GameCore()
         {

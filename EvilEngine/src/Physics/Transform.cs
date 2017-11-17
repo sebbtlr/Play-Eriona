@@ -57,7 +57,7 @@ namespace EvilEngine.Physics
             Width = rectangle.Width;
             Height = rectangle.Height;
         }
-        
+
         public Transform(Transform transform)
         {
             X = transform.X;

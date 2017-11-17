@@ -1,12 +1,20 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.Collections;
-using System.Linq;
+using Microsoft.Xna.Framework;
 
 namespace EvilEngine.Physics
 {
     public class ForceList : IEnumerable<Vector2>
     {
+        private float _mass;
+
+        public ForceList(float mass = 0.0f)
+        {
+            ForceStack = new Dictionary<ForceType, Vector2>();
+            Mass = mass;
+            Value = Vector2.Zero;
+        }
+
         public Dictionary<ForceType, Vector2> ForceStack { get; private set; }
 
         public Vector2 Value { get; private set; }
@@ -15,7 +23,6 @@ namespace EvilEngine.Physics
 
         public float Y => Value.Y;
 
-        private float _mass;
         public float Mass
         {
             get => _mass;
@@ -28,11 +35,14 @@ namespace EvilEngine.Physics
 
         public float MassInverse { get; private set; }
 
-        public ForceList(float mass = 0.0f)
+        public IEnumerator<Vector2> GetEnumerator()
         {
-            ForceStack = new Dictionary<ForceType, Vector2>();
-            Mass = mass;
-            Value = Vector2.Zero;
+            return ForceStack.Values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public void AddForce(ForceType id, Vector2 force)
@@ -52,13 +62,8 @@ namespace EvilEngine.Physics
         public Vector2 GetForce(ForceType id)
         {
             if (ForceStack.TryGetValue(id, out Vector2 toReturn))
-            {
                 return toReturn;
-            }
-            else
-            {
-                return Vector2.Zero;
-            }
+            return Vector2.Zero;
         }
 
         public void UpdateForce(ForceType id, Vector2 force)
@@ -77,23 +82,11 @@ namespace EvilEngine.Physics
         private void ComputeForces()
         {
             Value = Vector2.Zero;
-            foreach (Vector2 force in ForceStack.Values)
-            {
+            foreach (var force in ForceStack.Values)
                 Value += force;
-            }
 
             if (Mass > 0)
                 Value *= MassInverse;
-        }
-
-        public IEnumerator<Vector2> GetEnumerator()
-        {
-            return ForceStack.Values.GetEnumerator() as IEnumerator<Vector2>;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         public void Copy(ForceList other)
@@ -102,7 +95,7 @@ namespace EvilEngine.Physics
             Mass = other.Mass;
             ForceStack = new Dictionary<ForceType, Vector2>(other.ForceStack);
         }
-        
+
         public void CopyIn(out ForceList other)
         {
             other = new ForceList(Mass);
