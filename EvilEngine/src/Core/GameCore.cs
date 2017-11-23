@@ -1,5 +1,8 @@
-﻿using EvilEngine.Lab;
+﻿using System;
+using System.ComponentModel;
+using EvilEngine.Lab;
 using InputStateManager;
+using InputStateManager.Inputs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -7,19 +10,23 @@ namespace EvilEngine.Core
 {
     public class GameCore : Game
     {
+        public static GameCore Instance { get; private set; }
+        public static float DeltaTime { get; private set; }
+        public static AssetManager Assets = new AssetManager();
+
         private readonly GraphicsDeviceManager _graphics;
         private readonly Player _player;
 
-        public readonly InputManager Input = new InputManager();
+        public static readonly InputManager Input = new InputManager();
 
         private SpriteBatch _spriteBatch;
 
         public SpriteFont DefaultFont;
 
-        public float DeltaTime;
-
+        
         protected GameCore()
         {
+            Instance = this;
             _graphics = new GraphicsDeviceManager(this)
             {
                 PreferredBackBufferWidth = 800,
@@ -28,7 +35,8 @@ namespace EvilEngine.Core
             };
             Content.RootDirectory = "Content";
 
-            _player = new Player(this);
+            _player = new Player();
+             
         }
 
         protected override void Initialize()
@@ -36,6 +44,11 @@ namespace EvilEngine.Core
             base.Initialize();
 
             IsMouseVisible = true;
+            _graphics.SynchronizeWithVerticalRetrace = false;
+            _graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            _graphics.PreferMultiSampling = true;
+            _graphics.PreferredDepthStencilFormat = DepthFormat.Depth24Stencil8;
+            IsFixedTimeStep = false;
         }
 
         protected override void LoadContent()
@@ -44,6 +57,8 @@ namespace EvilEngine.Core
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             DefaultFont = Content.Load<SpriteFont>("debug");
             _player.LoadContent();
+            
+            _player.AfterLoad();
         }
 
         protected override void Update(GameTime gameTime)
@@ -52,6 +67,7 @@ namespace EvilEngine.Core
             DeltaTime = (float) gameTime.ElapsedGameTime.TotalSeconds;
             Input.Update();
             _player.Update();
+            _player.AfterUpdate();
         }
 
         protected override void Draw(GameTime gameTime)

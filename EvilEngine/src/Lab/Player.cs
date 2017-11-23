@@ -1,5 +1,6 @@
 ﻿using System;
 using EvilEngine.Core;
+using EvilEngine.Graphics;
 using EvilEngine.Physics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -17,6 +18,7 @@ namespace EvilEngine.Lab
 
     public class States
     {
+        public Vector2 Position;
         public Transform Hitbox;
         public Vector2 Speed;
         public PlayerStatus Status;
@@ -24,11 +26,21 @@ namespace EvilEngine.Lab
 
         public void Copy(States other)
         {
+            Position = other.Position;
             Status = other.Status;
             Hitbox = new Transform(other.Hitbox);
             Speed = other.Speed;
             other.Velocity.CopyIn(out Velocity);
         }
+    }
+[Flags]
+    public enum PlayerAnimation
+    {
+        Walk,
+        Jump,
+        Fall,
+        Idle,
+        Breath
     }
 
     // TODO: Jump Height
@@ -36,15 +48,14 @@ namespace EvilEngine.Lab
     public class Player
     {
         public const float WALK_SPEED = 250;
-        public const float JUMP_INITIAL = -350;
-        public const float JUMP_FORCE = -100;
-        public const float JUMP_TIME_MAX = 0.5f;
+        public const float JUMP_INITIAL = -600;
+        public const float JUMP_FORCE = 1.05f;
+        public const float JUMP_TIME_MAX = 0.35f;
 
         public const float DASH_TIME = 0.2f;
         public const float DASH_FORCE = 650;
         public readonly States CurrentState;
 
-        public readonly GameCore Game;
         public readonly Vector2 Gravity = new Vector2(0, 550);
         public readonly States LastState;
         private bool _canMove = true;
@@ -52,15 +63,14 @@ namespace EvilEngine.Lab
         private float _jumpTimeCounter;
 
         public Vector2 Scale;
-        public Texture2D Texture;
-        public Vector2 TextureOffset;
+        public readonly AnimationManager Animation;
 
-        public Player(GameCore game)
+        public Player()
         {
-            Game = game;
 
             CurrentState = new States
             {
+                Position = Vector2.Zero,
                 Status = PlayerStatus.Air,
                 Hitbox = new Transform(),
                 Speed = Vector2.Zero,
@@ -70,9 +80,13 @@ namespace EvilEngine.Lab
             LastState = new States();
             CurrentState.Velocity.CopyIn(out LastState.Velocity);
 
-            Scale = Vector2.One;
+            Scale = Vector2.One / 5;
+            
 
             CurrentState.Velocity.AddForce(ForceType.Gravity, Gravity);
+            
+            Animation = new AnimationManager();
+            
         }
 
         public void Initialize()
@@ -81,14 +95,49 @@ namespace EvilEngine.Lab
 
         public void LoadContent()
         {
-            Texture = Game.Content.Load<Texture2D>("spritesheet");
-            Console.WriteLine(Texture.Bounds.ToString());
-            CurrentState.Hitbox = new Transform(0, 0, 29, 65);
-            TextureOffset = Vector2.Zero;
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__000");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__001");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__002");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__003");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__004");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__005");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__006");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__007");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__008");
+            GameCore.Assets.LoadAndAdd<Texture2D>("ninja/Idle__009");
+            
+            LoadAnimations();
+        }
+
+        public void LoadAnimations()
+        {
+
+            Animation.AddAnimation(PlayerAnimation.Idle.ToString(), true, new[]
+            {
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__000"), new Transform(0, 0, 232, 439), null,
+                    -new Vector2(116, 439))
+            } );
+            
+            Animation.AddAnimation(PlayerAnimation.Breath.ToString(),0.1f, new []
+            {
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__000"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__001"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__002"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__003"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__004"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__005"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__006"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__007"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__008"), new Transform(0,0,232,439), null, -new Vector2(116, 439)),
+                new Sprite(GameCore.Assets.Get<Texture2D>("ninja/Idle__009"), new Transform(0,0,232,439), null, -new Vector2(116, 439))
+            } ); 
+            
+            Animation.ChangeAnimation(PlayerAnimation.Breath.ToString());
         }
 
         public void AfterLoad()
         {
+            LoadAnimations();
         }
 
         public static Vector2 Lerp(Vector2 value1, Vector2 value2, float amount)
@@ -104,24 +153,24 @@ namespace EvilEngine.Lab
 
             if (CurrentState.Status == PlayerStatus.Dash)
                 DashUpdate();
-            else if (Game.Input.Key.Is.Press(Keys.Space))
+            else if (GameCore.Input.Key.Is.Press(Keys.Space))
                 StartDash();
 
             if (_canMove)
+            {
                 InputUpdate();
+                JumpUpdate();
+            }
 
-#if DEBUG
-            if (CurrentState.Hitbox.Y + CurrentState.Speed.Y * Game.DeltaTime > 400 &&
+            if (CurrentState.Position.Y + CurrentState.Speed.Y * GameCore.DeltaTime > 590 &&
                 CurrentState.Status != PlayerStatus.Dash)
             {
                 CurrentState.Status = PlayerStatus.Ground;
-                CurrentState.Hitbox.Y = 400;
+                CurrentState.Position.Y = 590;
                 CurrentState.Speed.Y = 0;
             }
-#endif
-            CurrentState.Speed += CurrentState.Velocity.Value * Game.DeltaTime;
-
-            CurrentState.Hitbox.Position += CurrentState.Speed * Game.DeltaTime;
+            
+            UpdatePhysics();
         }
 
         private void StartDash()
@@ -130,16 +179,16 @@ namespace EvilEngine.Lab
 
             CurrentState.Status = PlayerStatus.Dash;
 
-            if (Game.Input.Key.Is.Down(Keys.Right))
+            if (GameCore.Input.Key.Is.Down(Keys.Right))
                 CurrentState.Speed = DASH_FORCE * Vector2.UnitX;
-            else if (Game.Input.Key.Is.Down(Keys.Left))
+            else if (GameCore.Input.Key.Is.Down(Keys.Left))
                 CurrentState.Speed = DASH_FORCE * -Vector2.UnitX;
             else
                 CurrentState.Speed = DASH_FORCE * -Vector2.UnitY;
 
-            if (Game.Input.Key.Is.Down(Keys.Up))
+            if (GameCore.Input.Key.Is.Down(Keys.Up))
                 CurrentState.Speed.Y = -DASH_FORCE;
-            else if (Game.Input.Key.Is.Down(Keys.Down))
+            else if (GameCore.Input.Key.Is.Down(Keys.Down))
                 CurrentState.Speed.Y = DASH_FORCE;
 
             CurrentState.Velocity.RemoveForce(ForceType.Gravity);
@@ -149,7 +198,7 @@ namespace EvilEngine.Lab
 
         private void DashUpdate()
         {
-            _dashCounter += Game.DeltaTime;
+            _dashCounter += GameCore.DeltaTime;
 
             if (_dashCounter >= DASH_TIME)
             {
@@ -162,35 +211,49 @@ namespace EvilEngine.Lab
 
         private void InputUpdate()
         {
-            if (Game.Input.Key.Is.Down(Keys.Left))
+            if (GameCore.Input.Key.Is.Down(Keys.Left))
                 CurrentState.Speed.X = -WALK_SPEED;
-            else if (Game.Input.Key.Is.Down(Keys.Right))
+            else if (GameCore.Input.Key.Is.Down(Keys.Right))
                 CurrentState.Speed.X = WALK_SPEED;
             else
                 CurrentState.Speed.X = 0;
+        }
 
-            if (Game.Input.Key.Is.Press(Keys.Up) && CurrentState.Status == PlayerStatus.Ground)
+        public void JumpUpdate()
+        {
+            if (GameCore.Input.Key.Is.Press(Keys.Up) && CurrentState.Status == PlayerStatus.Ground)
             {
-                CurrentState.Speed.Y = JUMP_FORCE;
                 CurrentState.Status = PlayerStatus.Air;
                 _jumpTimeCounter = 0;
             }
-            else if (Game.Input.Key.Was.Down(Keys.Up) && Game.Input.Key.Is.Down(Keys.Up) &&
-                     _jumpTimeCounter < JUMP_TIME_MAX)
+            else if (_jumpTimeCounter >= 0.0f && _jumpTimeCounter < JUMP_TIME_MAX)
             {
-                CurrentState.Speed.Y = MathHelper.Lerp(JUMP_INITIAL, JUMP_FORCE, 0.1f);
-                _jumpTimeCounter += Game.DeltaTime;
+                CurrentState.Speed.Y = JUMP_INITIAL * (1.0f - (float)Math.Pow(_jumpTimeCounter / JUMP_TIME_MAX, JUMP_FORCE));
+                _jumpTimeCounter += GameCore.DeltaTime;
             }
-
-            if (Game.Input.Key.Is.Release(Keys.Up))
+            else
                 _jumpTimeCounter = JUMP_TIME_MAX;
         }
 
+        public void UpdatePhysics()
+        {
+            CurrentState.Speed += CurrentState.Velocity.Value * GameCore.DeltaTime;
 
+            CurrentState.Position += CurrentState.Speed * GameCore.DeltaTime;
+        }
+
+        public void AfterUpdate()
+        {
+            CurrentState.Hitbox = Animation.Hitbox;
+            CurrentState.Hitbox.Size *= Scale;
+            
+            Animation.Update();
+        }
+        
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Texture, CurrentState.Hitbox.Position + TextureOffset, new Rectangle(212, 0, 29, 65),
-                Color.White);
+            spriteBatch.Draw(Animation.Texture, CurrentState.Position + Animation.TextureOffset * Scale, Animation.TextureClip,
+                Animation.TextureColorFilter, 0.0f, Vector2.Zero, Scale,SpriteEffects.None, 0);
 #if DEBUG
             DebugDraw(spriteBatch);
 #endif
@@ -214,9 +277,15 @@ namespace EvilEngine.Lab
             }
 
             var debug =
-                $"Status: {_debugStates.Status} \n Speed: {_debugStates.Speed} \n Velocity: {_debugStates.Velocity.Value} \n Position: {_debugStates.Hitbox.Position} \n DashTime: {_dashCounter} \n JumpCounter: {_jumpTimeCounter}";
+                $"Status: {_debugStates.Status} \n " +
+                $"Speed: {_debugStates.Speed} \n " +
+                $"Velocity: {_debugStates.Velocity.Value} \n " +
+                $"Position: {_debugStates.Position} \n " +
+                $"DashTime: {_dashCounter} \n " +
+                $"JumpCounter: {_jumpTimeCounter} \n " +
+                $"Mouse : X =>{GameCore.Input.Mouse.Is.X} / Y => {GameCore.Input.Mouse.Is.Y}";
 
-            spriteBatch.DrawString(Game.DefaultFont, debug, Vector2.Zero, Color.White);
+            spriteBatch.DrawString(GameCore.Instance.DefaultFont, debug, Vector2.Zero, Color.White);
         }
 #endif
     }

@@ -53,6 +53,10 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Core\GameCore.cs" />
+      <Compile Include="src\Core\AssetManager.cs"/>
+      <Compile Include="src\Graphics\AnimationManager.cs"/>
+      <Compile Include="src\Graphics\FrameList.cs"/>
+      <Compile Include="src\Graphics\Sprite.cs"/>
     <Compile Include="src\Lab\Player.cs" />
       <Compile Include="src\Physics\ForceList.cs"/>
       <Compile Include="src\Physics\ForceType.cs"/>
