@@ -4,9 +4,10 @@ using System.Collections.Generic;
 
 namespace EvilEngine.Core
 {
-    public class AssetManager : IDisposable
+    public sealed class AssetManager : IDisposable
     {
-        public bool disposed = false;
+        // ReSharper disable once MemberCanBePrivate.Global
+        public bool Disposed = false;
 
         private readonly Hashtable _resourcesList;
 
@@ -28,7 +29,8 @@ namespace EvilEngine.Core
         {
             foreach (KeyValuePair<string, object> element in _resourcesList.Values)
             {
-                if (element.Value is T && element.Value as T == asset)
+                T value = element.Value as T;
+                if (value != null && value == asset)
                 {
                     return element.Key;
                 }
@@ -53,7 +55,7 @@ namespace EvilEngine.Core
             catch (Exception e)
             {
                 // -TODO-: Replace by log
-                Console.WriteLine(e.ToString() + " '" + id + "'");
+                Console.WriteLine($"{e} \'{id}\'");
             }
         }
 
@@ -61,7 +63,8 @@ namespace EvilEngine.Core
         {
             if (_resourcesList.ContainsKey(id))
             {
-                (_resourcesList[id] as T ).Dispose();
+                var o = _resourcesList[id] as T;
+                o?.Dispose();
                 _resourcesList.Remove(id);
             }
         }
@@ -72,10 +75,10 @@ namespace EvilEngine.Core
             GC.SuppressFinalize(this);
         }
 
-        
-        protected virtual void Dispose(bool disposing)
+
+        private void Dispose(bool disposing)
         {
-            if (disposed)
+            if (Disposed)
                 return;
 
             if (disposing)
@@ -87,7 +90,7 @@ namespace EvilEngine.Core
                 _resourcesList.Clear();
             }
             
-            disposed = true;
+            Disposed = true;
         }
     }
 }

@@ -1,8 +1,5 @@
-﻿using System;
-using System.ComponentModel;
-using EvilEngine.Lab;
+﻿using EvilEngine.Lab;
 using InputStateManager;
-using InputStateManager.Inputs;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 

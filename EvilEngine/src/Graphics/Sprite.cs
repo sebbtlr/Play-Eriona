@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using EvilEngine.Physics;
+﻿using EvilEngine.Physics;
 using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
