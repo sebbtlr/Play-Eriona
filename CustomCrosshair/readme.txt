@@ -1,0 +1,1 @@
+Place 32x32 file named CustomCrosshair.png here.
